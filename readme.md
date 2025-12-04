@@ -1,269 +1,397 @@
 📡 Java Socket Chat Server
-Secure • Multi-User • Admin Controls • AI Integration • Full Logging • History Buffer
-(Final README for the code in full code.txt — see file citation)
-
-full code
-________________________________________
+Secure • Multi-User • Admin Controls • AI Integration • Logging • History Buffer
 🚀 Overview
-This project is a fully-featured multi-client chat server built using Java Sockets. It supports:
-✔ Authentication System
-•	Username + password login
-•	Secure hashed passwords (SHA-256)
-•	Signup for new users
-•	Automatic creation of a default admin account
-•	Admin status persisted in users.txt
-✔ Chat System
-•	Global broadcast messaging
-•	Private messaging /pm <user> <msg>
-•	Typing indicators (start/stop)
-•	Automatic message formatting
-•	Real-time join/leave announcements
-•	Server-side history buffer (up to 1000 messages)
-✔ AI Chat Integration
-•	/askgpt <prompt> sends a request to OpenAI GPT
-•	Replies streamed to user
-•	Logged as AI messages
-•	API key read from OPENAI_API_KEY environment variable
-✔ Admin Tools
-•	/kick <user>
-•	/changepw <user> <newpw>
-•	/rename <old> <new>
-•	/announce <message>
-•	/exit-server
-•	View IP/Port of all users
-•	Server shutdown logging
-✔ Logging System
-Logs stored in logs/:
-1.	chat_history.csv – all chat, system, AI, private messages
-2.	connections.csv – login, logout, kick, admin events, server shutdown
-✔ Server Console (Menu)
-•	Start/stop server
-•	Change port
-•	Show logs paths
-•	Reload users.txt
-•	Show active connections
-•	Exit application
-________________________________________
+
+This project is a fully-featured multi-client chat server written in pure Java Sockets, built for advanced networking coursework and real-world use.
+
+It includes:
+
+🔐 Authentication System
+
+Username + password login
+
+SHA-256 hashed passwords
+
+Automatic upgrade of legacy plaintext passwords
+
+Signup for new users
+
+Automatic creation of a default admin account
+
+Admin privileges tracked inside users.txt
+
+💬 Chat System
+
+Global broadcast messaging
+
+Private messaging using /pm <user> <msg>
+
+Typing indicators (start/stop)
+
+Join/leave announcements
+
+1000-message server-side history buffer
+
+Auto-formatting and full logging
+
+🤖 AI Chat Integration (OpenAI GPT)
+
+/askgpt <prompt> executes GPT request
+
+Responses streamed to the client
+
+Logged as AI messages
+
+API key loaded from OPENAI_API_KEY environment variable
+
+🛡 Admin Tools
+/kick <user>
+/changepw <user> <newpw>
+/rename <old> <new>
+/announce <msg>
+/exit-server
+/list (admin sees IP + port)
+
+🧾 Server Logging System
+
+Stored inside /logs:
+
+chat_history.csv — all chats, PMs, AI messages, system events
+
+connections.csv — connects, disconnects, kicks, login failures, shutdowns
+
+🖥 Server Console Menu
+
+Run via:
+
+java ServerMain
+
+
+From here, you can:
+
+Start/stop server
+
+Change port
+
+View active connections
+
+View chat and connection logs
+
+Reload users.txt
+
+Gracefully shut down the server
+
 📁 Project Structure
 /ChatServerProject
 │
-├── ServerMain.java        # Server entry point with interactive menu
-├── ChatServer.java        # Core server functionality
-├── ClientHandler.java     # One instance per connected client
-├── ChatClient.java        # Simple terminal-based client
-├── User.java              # User model
-├── UserManager.java       # Handles users.txt + password hashing
-├── ChatLogger.java        # Chat & connection logging
-├── ServerUtils.java       # Timestamp + CSV utilities
-├── MessageType.java       # (Enum – implied) Message categories
-├── AIClient.java          # OpenAI GPT API wrapper
+├── ServerMain.java         # Server entry point with interactive console menu
+├── ChatServer.java         # Core server class (socket listener, broadcast)
+├── ClientHandler.java      # Handles each connected client
+├── ChatClient.java         # Terminal-based client program
 │
-├── users.txt              # Accounts database
+├── User.java               # User model
+├── UserManager.java        # Handles users.txt, hashing, admin roles
+│
+├── ChatLogger.java         # CSV logging for chat + connections
+├── ServerUtils.java        # Timestamp + clean CSV escape functions
+├── MessageType.java        # Enum representing message categories
+├── AIClient.java           # OpenAI GPT API client
+│
+├── users.txt               # User credential database
 └── logs/
     ├── chat_history.csv
     └── connections.csv
-________________________________________
-🔧 Features Breakdown
-1. 🔐 User Authentication
-Authentication handled via UserManager:
-Supported formats inside users.txt:
+
+🔧 Feature Breakdown (Detailed)
+1️⃣ 🔐 User Authentication
+Users file formats supported
 username:password
-username:$sha256$<sha256hash>
-username:$sha256$<sha256hash>:admin
-New users
-•	Created on the fly if username does not exist
-•	Passwords immediately become SHA-256 hashed
-Old plaintext users
-•	Still supported
-•	Upgraded to hashed once admin changes password
-Admin auto-creation
-If no admin exists, the system creates:
-admin:$sha256$<hash of 'admin'>:admin
-________________________________________
-2. 💬 Messaging System
-Broadcast messages
-Everyone receives:
-username: message
-Private Message Command
-/pm bob hello there!
+username:$sha256$<hash>
+username:$sha256$<hash>:admin
+
+Signup Workflow
+
+If username does not exist:
+
+User is prompted to create an account
+
+Password is hashed instantly
+
+User entry written to users.txt
+
+Auto-Admin
+
+If no admin exists, the server creates:
+
+admin:$sha256$<hash-of-admin>:admin
+
+2️⃣ 💬 Messaging System
+Broadcast
+bob: Hello everyone!
+
+Private Messaging
+
+Command:
+
+/pm alice hey what's up?
+
+
 Sender sees:
-[PM to bob] hello there!
+
+[PM to alice] hey what's up?
+
+
 Receiver sees:
-[PM from alice] hello there!
-All PMs are logged correctly.
-________________________________________
-3. 📝 Chat History Buffer
-Server keeps the last 1000 messages in memory.
-Newly logged-in user receives:
+
+[PM from bob] hey what's up?
+
+
+✔ All private messages are logged (with hidden content)
+✔ No one else sees PMs
+
+3️⃣ 🧠 Chat History Buffer
+
+New client receives:
+
 === Last 1000 Messages ===
-<messages>
+<...history...>
 === End of History ===
-________________________________________
-4. ⌨ Typing Indicators
+
+4️⃣ ⌨️ Typing Indicators
+
 Client sends:
+
 /typing
 /stoppedtyping
-Server broadcasts without logging:
+
+
+Broadcasts:
+
 [SYSTEM] Bob is typing...
 [SYSTEM] Bob stopped typing.
-________________________________________
-5. 🤖 AI Integration (/askgpt)
+
+
+No logs saved for typing events.
+
+5️⃣ 🤖 AI Integration using /askgpt
+
 Example:
+
 /askgpt Write a poem about Java sockets.
-Server spawns a background thread, calls the OpenAI API, returns the response.
-AI messages logged under MessageType.AI.
-Requirements
-Set your key:
-Windows (PowerShell):
-setx OPENAI_API_KEY "your_key_here"
-Mac/Linux:
-export OPENAI_API_KEY="your_key_here"
-________________________________________
-6. 🛡 Admin Commands
-/announce <msg>
-Broadcast an admin message.
-/kick <user>
-Disconnects user immediately.
-/changepw <user> <newpw>
-Changes stored password (hashed automatically).
-/rename <old> <new>
-Renames both user account and live connection.
-/exit-server
-Gracefully shuts down server.
-________________________________________
-7. 🧾 Logging System
+
+
+Server:
+
+Spawns async thread
+
+Calls OpenAI GPT model
+
+Streams lines back to requester
+
+Logs message under MessageType.AI
+
+Environment Setup
+
+Windows:
+
+setx OPENAI_API_KEY "yourkey"
+
+
+Linux/Mac:
+
+export OPENAI_API_KEY="yourkey"
+
+6️⃣ 🛡 Admin Commands
+Command	Description
+/announce <msg>	Global admin announcement
+/kick <user>	Immediately disconnect user
+/changepw <user> <pw>	Change user's password
+/rename <old> <new>	Rename user live + in file
+/exit-server	Gracefully shuts down
+/list	Admin sees usernames + IP:port
+
+Admins are defined via :admin tag in users.txt.
+
+7️⃣ 🧾 Logging System
 chat_history.csv
+
 Columns:
+
 timestamp,from_user,to_user,message_type,message
-Logged for:
-•	broadcast messages
-•	private messages
-•	system events
-•	admin events
-•	AI responses
+
+
+Logs:
+
+Broadcast
+
+PMs
+
+System events
+
+Admin events
+
+AI responses
+
 connections.csv
+
 Columns:
+
 timestamp,username,ip,port,event_type
-Logged for:
-•	CONNECT
-•	LOGIN_SUCCESS
-•	LOGIN_FAIL
-•	SIGNUP_SUCCESS
-•	DISCONNECT
-•	ADMIN_ACTION:...
-•	SERVER_SHUTDOWN
-________________________________________
-8. 🖥 Server Console (ServerMain)
-Run:
+
+
+Logs:
+
+CONNECT
+
+LOGIN_SUCCESS
+
+LOGIN_FAIL
+
+SIGNUP_SUCCESS
+
+DISCONNECT
+
+ADMIN_ACTION
+
+SERVER_SHUTDOWN
+
+8️⃣ 🖥 Server Console (ServerMain)
+
+When running:
+
 java ServerMain
-You get:
+
+
+Menu:
+
 1. Start server
 2. Stop server
-3. Set listening port
+3. Change port
 4. View active connections
-5. Show path to chat_history.csv
-6. Show path to connections.csv
+5. Show chat_history.csv path
+6. Show connections.csv path
 7. Reload users.txt
 8. Exit application
-This makes the server extremely easy to operate.
-________________________________________
-🛠 How to Run
+
+🛠 How to Compile & Run
 1. Compile
 javac *.java
+
 2. Start server
 java ServerMain
-3. Start client (in a separate terminal)
+
+3. Start client
 java ChatClient
-If server is local and default port:
+
+
+Default host/port:
+
 Host: localhost
 Port: 12345
-________________________________________
+
 🌐 Client Usage Guide
-After connecting:
-Login flow:
-Username:
-Password:
-If username doesn’t exist:
-Username not found. Do you want to sign up?
-yes/no
-Commands:
+Commands Available
 Command	Description
-/pm <user> <msg>	Private message
-/list	View users (admin sees IPs)
-/typing	Show typing indicator
-/stoppedtyping	Remove typing indicator
+/pm <user> <msg>	Send private message
+/list	List users (admin sees IP/port)
+/typing	Send typing indicator
+/stoppedtyping	Stop indicator
 /askgpt <prompt>	Ask OpenAI
-/announce <msg>	(Admin) Broadcast admin message
-/kick <user>	(Admin) Disconnect user
-/changepw <user> <pw>	(Admin) Change password
-/rename <old> <new>	(Admin) Rename user
-/exit-server	(Admin) Shutdown server
-________________________________________
+/announce <msg>	Admin broadcast
+/kick <user>	Admin kick
+/changepw <user> <pw>	Admin changepw
+/rename <old> <new>	Rename user
+/exit-server	Shutdown server
 🔒 Security Notes
-Passwords:
-•	All new or changed passwords → SHA-256 hashed
-•	Old plaintext entries still allowed (legacy mode)
-OpenAI API:
-•	HTTPS secure request
-•	JSON escaping applied
-•	Key never hard-coded
-Logging:
-•	Messages escaped for safe CSV writing
-•	IP addresses logged for security audit
-________________________________________
-🧩 How the System Works (Architecture Summary)
-Sequence for a new connection:
-1.	Client connects → server logs CONNECT
-2.	Login/signup handled
-3.	Last 1000 messages are sent
-4.	User is added to active client map
-5.	Join message broadcasted
-6.	User can chat, PM, ask GPT, etc.
-Thread Model:
-•	One thread per client (ExecutorService cached thread pool)
-•	Separate accept thread
-•	Separate AI request threads
-Concurrency:
-•	UserManager: synchronized
-•	Logger: synchronized
-•	History buffer: synchronized
-•	Active clients stored in ConcurrentHashMap
-________________________________________
-🗄 Required Files
-Before starting server, ensure:
-users.txt exists
-If missing, system creates it and adds default admin.
-Example:
-admin:$sha256$9ef...:admin
-bob:$sha256$ab3...
-alice:$sha256$8dd...
-logs/ folder
-Created automatically on first run.
-________________________________________
+Passwords
+
+New and updated passwords → SHA-256 hashed
+
+Legacy plaintext users allowed but upgraded when password changes
+
+OpenAI API
+
+Key never stored in code
+
+HTTPS encryption
+
+All content sanitized
+
+CSV Logging
+
+All fields escaped
+
+Safe for Excel import
+
+🧩 System Architecture Summary
+Connection Flow
+
+Client connects → server logs CONNECT
+
+Authentication / signup
+
+Server sends last 1000 message history
+
+User added to active client map
+
+Join message broadcast
+
+User may chat, PM, ask GPT, or use admin commands
+
+Threading Model
+
+One thread per client (cached thread pool)
+
+Separate accept thread
+
+Separate AI threads
+
+Concurrency
+
+UserManager synchronized
+
+Logger synchronized
+
+History buffer synchronized
+
+Active users: ConcurrentHashMap
+
 🧪 Example Session
-User connects:
 Welcome to the Java Chat Server.
-Please log in.
 Username: bob
 Password: ****
-[SYSTEM] Login successful. Welcome, bob.
-Sends message:
+[SYSTEM] Login successful. Welcome, bob!
+
 bob: Hello everyone!
-Admin kicks a user:
+
+
+Admin:
+
 /kick bob
+
+
+Server:
+
 [SYSTEM] bob was kicked by admin alice.
-AI usage:
+
+
+AI:
+
 /askgpt tell me a joke
 [AI] Why do Java developers wear glasses? Because they don't C#.
-________________________________________
-📦 Future Extensions (Optional Ideas)
-•	GUI Client (JavaFX/Swing)
-•	File transfer between clients
-•	End-to-end encryption
-•	Admin dashboard (web-based)
-•	Rate limiting / anti-spam
-•	Database-backed user storage (MySQL, SQLite)
-________________________________________
 
+📦 Future Extensions
 
+GUI Client (JavaFX/Swing)
 
+File transfer between clients
+
+End-to-end encryption
+
+MySQL-based authentication
+
+Web dashboard for admin
+
+Anti-spam filters
+
+✅
