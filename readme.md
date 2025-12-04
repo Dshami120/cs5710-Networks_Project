@@ -187,5 +187,5 @@ Port: 12345
 
 ---
 
-## ✔ Ready for Submission
-This README is formatted for **GitHub**, **professors**, and **project reports**.
+
+
