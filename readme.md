@@ -1,361 +1,156 @@
 📡 Java Socket Chat Server
 Secure • Multi-User • Admin Controls • AI Integration • Logging • History Buffer
-🚀 Overview
-
-This project is a fully-featured multi-client chat server written in pure Java Sockets, built for advanced networking coursework and real-world use.
-
-It includes:
-
+A fully-featured multi-client chat server built in pure Java Sockets, designed for advanced networking coursework and real-world applications.
+This server includes authentication, admin tools, chat history, AI assistance, logging, and robust concurrency handling.
+________________________________________
+🌟 Features at a Glance
 🔐 Authentication System
-
-Username + password login
-
-SHA-256 hashed passwords
-
-Automatic upgrade of legacy plaintext passwords
-
-Signup for new users
-
-Automatic creation of a default admin account
-
-Admin privileges tracked inside users.txt
-
+•	Username + password login
+•	SHA-256 hashed passwords
+•	Automatic upgrade of legacy plaintext passwords
+•	Signup for new users
+•	Automatic creation of default admin
+•	Admin privileges stored in users.txt
+________________________________________
 💬 Chat System
-
-Global broadcast messaging
-
-Private messaging using /pm <user> <msg>
-
-Typing indicators (start/stop)
-
-Join/leave announcements
-
-1000-message server-side history buffer
-
-Auto-formatting and full logging
-
+•	Global broadcast chat
+•	Private messaging /pm <user> <msg>
+•	Typing indicators
+•	Join/leave announcements
+•	1000-message history buffer sent to new users
+•	Auto-formatted messages
+•	Full CSV logging
+________________________________________
 🤖 AI Chat Integration (OpenAI GPT)
-
-/askgpt <prompt> executes GPT request
-
-Responses streamed to the client
-
-Logged as AI messages
-
-API key loaded from OPENAI_API_KEY environment variable
-
+•	/askgpt <prompt> generates GPT responses
+•	Responses streamed to client
+•	Logged as AI messages
+•	API key read from environment variable:
+o	Windows: setx OPENAI_API_KEY "yourkey"
+o	Linux/Mac: export OPENAI_API_KEY="yourkey"
+________________________________________
 🛡 Admin Tools
-/kick <user>
-/changepw <user> <newpw>
-/rename <old> <new>
-/announce <msg>
-/exit-server
-/list (admin sees IP + port)
-
-🧾 Server Logging System
-
-Stored inside /logs:
-
-chat_history.csv — all chats, PMs, AI messages, system events
-
-connections.csv — connects, disconnects, kicks, login failures, shutdowns
-
+Command	Description
+/kick <user>	Disconnect a user immediately
+/changepw <user> <pw>	Force-change password
+/rename <old> <new>	Rename a user live + in file
+/announce <msg>	Server-wide announcement
+/list	Show connected users (admin sees IP + port)
+/exit-server	Gracefully shut down the server
+________________________________________
+🧾 Logging System
+chat_history.csv
+•	timestamp
+•	from_user
+•	to_user
+•	message_type
+•	message
+Logs:
+•	Broadcasts
+•	Private messages
+•	System events
+•	Admin actions
+•	AI responses
+connections.csv
+•	timestamp
+•	username
+•	ip
+•	port
+•	event_type
+Logs:
+•	CONNECT
+•	LOGIN_SUCCESS
+•	LOGIN_FAIL
+•	SIGNUP_SUCCESS
+•	DISCONNECT
+•	ADMIN_ACTION
+•	SERVER_SHUTDOWN
+________________________________________
 🖥 Server Console Menu
-
-Run via:
-
+Run using:
 java ServerMain
-
-
-From here, you can:
-
-Start/stop server
-
-Change port
-
-View active connections
-
-View chat and connection logs
-
-Reload users.txt
-
-Gracefully shut down the server
-
+Menu options:
+1.	Start server
+2.	Stop server
+3.	Change port
+4.	View active connections
+5.	Show chat_history.csv path
+6.	Show connections.csv path
+7.	Reload users.txt
+8.	Exit application
+________________________________________
 📁 Project Structure
-/ChatServerProject
+ChatServerProject/
 │
-├── ServerMain.java         # Server entry point with interactive console menu
-├── ChatServer.java         # Core server class (socket listener, broadcast)
-├── ClientHandler.java      # Handles each connected client
+├── ServerMain.java         # Interactive console menu
+├── ChatServer.java         # Main server listener + broadcast manager
+├── ClientHandler.java      # Threaded per-client handler
 ├── ChatClient.java         # Terminal-based client program
 │
 ├── User.java               # User model
-├── UserManager.java        # Handles users.txt, hashing, admin roles
+├── UserManager.java        # Handles credentials, hashing, and users.txt
 │
-├── ChatLogger.java         # CSV logging for chat + connections
-├── ServerUtils.java        # Timestamp + clean CSV escape functions
-├── MessageType.java        # Enum representing message categories
-├── AIClient.java           # OpenAI GPT API client
+├── ChatLogger.java         # CSV logger for chat + connection events
+├── ServerUtils.java        # Timestamp + safe CSV escaping
+├── MessageType.java        # Enum for message categories
+├── AIClient.java           # OpenAI GPT client
 │
 ├── users.txt               # User credential database
 └── logs/
     ├── chat_history.csv
     └── connections.csv
-
-🔧 Feature Breakdown (Detailed)
-1️⃣ 🔐 User Authentication
-Users file formats supported
-username:password
-username:$sha256$<hash>
-username:$sha256$<hash>:admin
-
-Signup Workflow
-
-If username does not exist:
-
-User is prompted to create an account
-
-Password is hashed instantly
-
-User entry written to users.txt
-
-Auto-Admin
-
-If no admin exists, the server creates:
-
-admin:$sha256$<hash-of-admin>:admin
-
-2️⃣ 💬 Messaging System
-Broadcast
-bob: Hello everyone!
-
-Private Messaging
-
-Command:
-
-/pm alice hey what's up?
-
-
-Sender sees:
-
-[PM to alice] hey what's up?
-
-
-Receiver sees:
-
-[PM from bob] hey what's up?
-
-
-✔ All private messages are logged (with hidden content)
-✔ No one else sees PMs
-
-3️⃣ 🧠 Chat History Buffer
-
-New client receives:
-
-=== Last 1000 Messages ===
-<...history...>
-=== End of History ===
-
-4️⃣ ⌨️ Typing Indicators
-
-Client sends:
-
-/typing
-/stoppedtyping
-
-
-Broadcasts:
-
-[SYSTEM] Bob is typing...
-[SYSTEM] Bob stopped typing.
-
-
-No logs saved for typing events.
-
-5️⃣ 🤖 AI Integration using /askgpt
-
-Example:
-
-/askgpt Write a poem about Java sockets.
-
-
-Server:
-
-Spawns async thread
-
-Calls OpenAI GPT model
-
-Streams lines back to requester
-
-Logs message under MessageType.AI
-
-Environment Setup
-
-Windows:
-
-setx OPENAI_API_KEY "yourkey"
-
-
-Linux/Mac:
-
-export OPENAI_API_KEY="yourkey"
-
-6️⃣ 🛡 Admin Commands
-Command	Description
-/announce <msg>	Global admin announcement
-/kick <user>	Immediately disconnect user
-/changepw <user> <pw>	Change user's password
-/rename <old> <new>	Rename user live + in file
-/exit-server	Gracefully shuts down
-/list	Admin sees usernames + IP:port
-
-Admins are defined via :admin tag in users.txt.
-
-7️⃣ 🧾 Logging System
-chat_history.csv
-
-Columns:
-
-timestamp,from_user,to_user,message_type,message
-
-
-Logs:
-
-Broadcast
-
-PMs
-
-System events
-
-Admin events
-
-AI responses
-
-connections.csv
-
-Columns:
-
-timestamp,username,ip,port,event_type
-
-
-Logs:
-
-CONNECT
-
-LOGIN_SUCCESS
-
-LOGIN_FAIL
-
-SIGNUP_SUCCESS
-
-DISCONNECT
-
-ADMIN_ACTION
-
-SERVER_SHUTDOWN
-
-8️⃣ 🖥 Server Console (ServerMain)
-
-When running:
-
-java ServerMain
-
-
-Menu:
-
-1. Start server
-2. Stop server
-3. Change port
-4. View active connections
-5. Show chat_history.csv path
-6. Show connections.csv path
-7. Reload users.txt
-8. Exit application
-
-🛠 How to Compile & Run
-1. Compile
+________________________________________
+🔧 Setup & Installation
+1️⃣ Compile the project
 javac *.java
-
-2. Start server
+2️⃣ Start the server
 java ServerMain
-
-3. Start client
+3️⃣ Start a client
 java ChatClient
-
-
-Default host/port:
-
+Default settings:
 Host: localhost
 Port: 12345
-
-🌐 Client Usage Guide
-Commands Available
+________________________________________
+🌐 Client Commands Reference
 Command	Description
-/pm <user> <msg>	Send private message
-/list	List users (admin sees IP/port)
+/pm <user> <msg>	Private message
 /typing	Send typing indicator
-/stoppedtyping	Stop indicator
-/askgpt <prompt>	Ask OpenAI
+/stoppedtyping	Stop typing indicator
+/askgpt <prompt>	Ask OpenAI GPT
+/list	Show users (admin sees IP:port)
 /announce <msg>	Admin broadcast
-/kick <user>	Admin kick
-/changepw <user> <pw>	Admin changepw
+/kick <user>	Remove user
+/changepw <user> <pw>	Change user password
 /rename <old> <new>	Rename user
 /exit-server	Shutdown server
+________________________________________
 🔒 Security Notes
 Passwords
-
-New and updated passwords → SHA-256 hashed
-
-Legacy plaintext users allowed but upgraded when password changes
-
-OpenAI API
-
-Key never stored in code
-
-HTTPS encryption
-
-All content sanitized
-
-CSV Logging
-
-All fields escaped
-
-Safe for Excel import
-
+•	Always hashed using SHA-256
+•	Legacy plaintext automatically upgraded
+•	No passwords stored in code or logs
+OpenAI Integration
+•	API key only loaded from environment variables
+•	Never written to disk
+Logging Safety
+•	All fields escaped for safe CSV import
+•	AI responses logged without exposing API key
+________________________________________
 🧩 System Architecture Summary
 Connection Flow
-
-Client connects → server logs CONNECT
-
-Authentication / signup
-
-Server sends last 1000 message history
-
-User added to active client map
-
-Join message broadcast
-
-User may chat, PM, ask GPT, or use admin commands
-
-Threading Model
-
-One thread per client (cached thread pool)
-
-Separate accept thread
-
-Separate AI threads
-
-Concurrency
-
-UserManager synchronized
-
-Logger synchronized
-
-History buffer synchronized
-
-Active users: ConcurrentHashMap
-
+1.	Client connects → logged
+2.	Authentication or signup
+3.	Server sends last 1000 messages
+4.	User added to active map
+5.	Join broadcast
+6.	User can chat, PM, ask GPT, use admin tools
+Thread Model
+•	One thread per client
+•	Server socket listener thread
+•	Asynchronous GPT request threads
+•	ConcurrentHashMap for active users
+•	Synchronized: UserManager, Logger, History Buffer
+________________________________________
 🧪 Example Session
 Welcome to the Java Chat Server.
 Username: bob
@@ -363,35 +158,18 @@ Password: ****
 [SYSTEM] Login successful. Welcome, bob!
 
 bob: Hello everyone!
-
-
-Admin:
-
+Admin kicks Bob:
 /kick bob
-
-
-Server:
-
 [SYSTEM] bob was kicked by admin alice.
-
-
-AI:
-
+AI example:
 /askgpt tell me a joke
 [AI] Why do Java developers wear glasses? Because they don't C#.
+________________________________________
+🔮 Future Extensions
+•	GUI Client (JavaFX/Swing)
+•	File transfer between clients
+•	MySQL-backed authentication
+•	Full end-to-end encryption
+•	Browser-based admin dashboard
+•	Anti-spam / rate limiting
 
-📦 Future Extensions
-
-GUI Client (JavaFX/Swing)
-
-File transfer between clients
-
-End-to-end encryption
-
-MySQL-based authentication
-
-Web dashboard for admin
-
-Anti-spam filters
-
-✅
